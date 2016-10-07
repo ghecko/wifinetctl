@@ -1,10 +1,10 @@
 import re, os
 import itertools
 
-import wifi.subprocess_compat as subprocess
+import wifinetctl.subprocess_compat as subprocess
 from pbkdf2 import PBKDF2
-from wifi.utils import ensure_file_exists
-from wifi.exceptions import ConnectionError
+from wifinetctl.utils import ensure_file_exists
+from wifinetctl.exceptions import ConnectionError
 
 def configuration(interface, cell, passkey=None):
     """
@@ -121,10 +121,13 @@ class Scheme(object):
         """
         return cls(interface, name, configuration(interface, cell, passkey))
 
-    """
-        enregistrement de toutes les options
-        delete juste en dessous
-    """
+    def delete(self):
+        """
+        Deletes the configuration from the :attr:`interfaces` file.
+        """
+        Wireless_File =  self.interfaces + self.interface + '-' + self.name
+        os.remove(Wireless_File)
+
     def save(self):
         """
         Writes the configuration to the :attr:`interfaces` file.
