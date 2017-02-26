@@ -1,4 +1,5 @@
-# wifinetctl
+wifinetctl
+==========
 
 Wifinetctl is a portability wifi librari for netctl
 It's a fork of pywifi
