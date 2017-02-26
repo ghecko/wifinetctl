@@ -9,7 +9,6 @@ from wifinetctl.exceptions import ConnectionError
 def configuration(interface, cell, passkey=None):
     """
     Returns a dictionary of configuration options for cell
-
     Asks for a password if necessary
     """
     if not cell.encrypted:
@@ -157,7 +156,15 @@ class Scheme(object):
         if os.path.exists(Wireless_File):
             subprocess.check_output(['netctl', 'stop-all'], stderr=subprocess.STDOUT)
             subprocess.check_output(['ip', 'link', 'set', self.interface, 'down'], stderr=subprocess.STDOUT)
-            ifconnect_output = subprocess.check_output(['netctl', 'start', self.interface + '-' + self.name], stderr=subprocess.STDOUT)
+            try:
+                ifconnect_output = subprocess.check_output(['netctl', 'start', self.interface + '-' + self.name], stderr=subprocess.STDOUT)
+            except:
+		ifconnect_status = subprocess.Popen(['systemctl', 'status', 'netctl@' + self.interface + '\\x2d' + self.name + '.service'], stdout=subprocess.PIPE)
+                out,err = ifconnect_status.communicate()
+                if 'WPA association/authentication failed for interface \'wlan0\'' in out:
+                    print 'bad Password!!!!!!!!!!!!!!!!'
+                    raise Exception('BadPassword')
+                subprocess.check_output(['rm', Wireless_File], stderr=subprocess.STDOUT)
         else:
             tmp_Wireless_File = '/tmp/' + self.interface + '-' + self.name
             with open(tmp_Wireless_File, 'a') as f:
@@ -165,7 +172,10 @@ class Scheme(object):
             subprocess.check_output(['netctl', 'stop-all'], stderr=subprocess.STDOUT)
             subprocess.check_output(['ip', 'link', 'set', self.interface, 'down'], stderr=subprocess.STDOUT)
             ifconnect_output = subprocess.check_output(['netctl', 'start', self.interface + '-' + self.name], stderr=subprocess.STDOUT)
-        print ifconnect_output
+        if 'ifconnect_output' in locals():
+            print ifconnect_output
+        else:
+            print "failed to connect"
 
     def parse_ifup_output(self, output):
         matches = bound_ip_re.search(output)
@@ -237,7 +247,7 @@ def extract_schemes(interface, interfaces, scheme_class=Scheme):
                                     options['ESSID'] = m.group(1)
                                     continue
                                 if "Key=" in line:
-                                    m = re.search('"(.{1,})', line)
+                                    m = re.search('Key=(.{1,})', line)
                                     options['Key'] = m.group(1)
                                     continue
                                 continue
